@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -967,19 +968,6 @@ function limparDados(){
   location.reload();
 }
 // ─────────────────────────────────────────────────────────────
-
-// Intercepta todas as ações que modificam dados para auto-salvar
-const _addLanc = addLanc;
-addLanc = function(){ _addLanc(); salvar(); };
-
-const _delLanc = delLanc;
-delLanc = function(id){ _delLanc(id); salvar(); };
-
-const _saveRec = saveRec;
-saveRec = function(){ _saveRec(); salvar(); };
-
-const _saveLim = saveLim;
-saveLim = function(){ _saveLim(); salvar(); };
 
 function toast(id,msg,err=false){
   const el=document.getElementById(id);
