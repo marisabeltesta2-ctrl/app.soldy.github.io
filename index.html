@@ -207,7 +207,7 @@ async function sdFazerLogin(){
   try{
     var r=await fetch('https://bpuolrltdkmdeynlkzlk.supabase.co/auth/v1/token?grant_type=password',{
       method:'POST',
-      headers:{'apikey':'sb_publishable_oqJTDI7bLEHqNwPGn97CqA_Zopt1v77','Content-Type':'application/json'},
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdW9scmx0ZGttZGV5bmxremxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMjY1ODYsImV4cCI6MjA5OTcwMjU4Nn0.Ut_FoajTCwL5IlqTQlBNTSuNuMHd47by3MbuYHupVhs','Content-Type':'application/json'},
       body:JSON.stringify({email:email,password:senha})
     });
     var d=await r.json();
@@ -262,7 +262,7 @@ async function sdCriarConta(){
   try{
     var r=await fetch('https://bpuolrltdkmdeynlkzlk.supabase.co/auth/v1/signup',{
       method:'POST',
-      headers:{'apikey':'sb_publishable_oqJTDI7bLEHqNwPGn97CqA_Zopt1v77','Content-Type':'application/json'},
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdW9scmx0ZGttZGV5bmxremxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMjY1ODYsImV4cCI6MjA5OTcwMjU4Nn0.Ut_FoajTCwL5IlqTQlBNTSuNuMHd47by3MbuYHupVhs','Content-Type':'application/json'},
       body:JSON.stringify({email:email,password:senha,data:{nome:nome}})
     });
     var d=await r.json();
@@ -297,7 +297,7 @@ async function sdEsqueciSenha(){
   try{
     var r = await fetch('https://bpuolrltdkmdeynlkzlk.supabase.co/auth/v1/recover',{
       method:'POST',
-      headers:{'apikey':'sb_publishable_oqJTDI7bLEHqNwPGn97CqA_Zopt1v77','Content-Type':'application/json'},
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdW9scmx0ZGttZGV5bmxremxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMjY1ODYsImV4cCI6MjA5OTcwMjU4Nn0.Ut_FoajTCwL5IlqTQlBNTSuNuMHd47by3MbuYHupVhs','Content-Type':'application/json'},
       body:JSON.stringify({email:email})
     });
     if(r.ok){
@@ -1028,7 +1028,7 @@ function atualizarStatus(msg, cor){
 
 // ── SUPABASE ─────────────────────────────────────────────────
 const SUPA_URL = 'https://bpuolrltdkmdeynlkzlk.supabase.co';
-const SUPA_KEY = 'sb_publishable_oqJTDI7bLEHqNwPGn97CqA_Zopt1v77';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdW9scmx0ZGttZGV5bmxremxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMjY1ODYsImV4cCI6MjA5OTcwMjU4Nn0.Ut_FoajTCwL5IlqTQlBNTSuNuMHd47by3MbuYHupVhs';
 let supaUser = null;
 
 async function supaFetch(path, method='GET', body=null, token=null){
@@ -1262,4 +1262,3 @@ async function tentarRestaurarSessao(){
 </script>
 </body>
 </html>
-
