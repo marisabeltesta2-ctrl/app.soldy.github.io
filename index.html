@@ -213,6 +213,7 @@ async function sdFazerLogin(){
     var d=await r.json();
     if(r.ok&&d.access_token){
       window._soldyUser=d;
+      window.supaUser=d;
       localStorage.setItem('soldy_session',JSON.stringify({
         access_token:d.access_token,
         refresh_token:d.refresh_token,
@@ -220,7 +221,8 @@ async function sdFazerLogin(){
       }));
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('appMain').style.display='block';
-      if(typeof iniciarApp==='function') iniciarApp();
+      if(typeof abrirApp==='function') abrirApp();
+      else if(typeof iniciarApp==='function') iniciarApp();
     } else {
       errMsg.textContent=d.error_description||d.msg||'E-mail ou senha incorretos.';
       erro.style.display='block';
@@ -1124,7 +1126,7 @@ async function sair(){
 
 // ── SINCRONIZAÇÃO COM SUPABASE ────────────────────────────────
 async function carregarDoSupabase(){
-  const user = supaUser || window._soldyUser;
+  const user = window.supaUser || supaUser || window._soldyUser;
   if(!user) return false;
   const tk = user.access_token;
   const uid = user.user?.id;
@@ -1152,7 +1154,7 @@ async function carregarDoSupabase(){
 }
 
 async function salvarNoSupabase(){
-  const user = supaUser || window._soldyUser;
+  const user = window.supaUser || supaUser || window._soldyUser;
   if(!user) return;
   const tk  = user.access_token;
   const uid = user.user?.id;
@@ -1217,18 +1219,33 @@ async function tentarRestaurarSessao(){
   if(!sess) return false;
   try {
     const s = JSON.parse(sess);
-    // Tenta renovar token
-    const r = await supaFetch('/auth/v1/token?grant_type=refresh_token','POST',{refresh_token: s.refresh_token});
-    if(r.ok && r.data.access_token){
-      supaUser = r.data;
-      localStorage.setItem('soldy_session', JSON.stringify({
-        access_token: r.data.access_token,
-        refresh_token: r.data.refresh_token,
-        user: r.data.user
-      }));
-      return true;
+    // Primeiro tenta usar o token existente
+    if(s.access_token){
+      // Verifica se o token ainda é válido
+      const teste = await supaFetch('/auth/v1/user','GET',null,s.access_token);
+      if(teste.ok && teste.data.id){
+        supaUser = { access_token: s.access_token, refresh_token: s.refresh_token, user: teste.data };
+        window._soldyUser = supaUser;
+        window.supaUser = supaUser;
+        return true;
+      }
     }
-  } catch(e){}
+    // Se não, tenta renovar com refresh token
+    if(s.refresh_token){
+      const r = await supaFetch('/auth/v1/token?grant_type=refresh_token','POST',{refresh_token: s.refresh_token});
+      if(r.ok && r.data.access_token){
+        supaUser = r.data;
+        window._soldyUser = supaUser;
+        window.supaUser = supaUser;
+        localStorage.setItem('soldy_session', JSON.stringify({
+          access_token: r.data.access_token,
+          refresh_token: r.data.refresh_token,
+          user: r.data.user
+        }));
+        return true;
+      }
+    }
+  } catch(e){ console.warn('Erro ao restaurar sessão:', e); }
   localStorage.removeItem('soldy_session');
   return false;
 }
@@ -1245,3 +1262,4 @@ async function tentarRestaurarSessao(){
 </script>
 </body>
 </html>
+
