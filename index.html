@@ -1188,6 +1188,7 @@ function iniciarApp(){ abrirApp(); }
 
 async function abrirApp(){
   if(!supaUser && window._soldyUser) supaUser = window._soldyUser;
+  if(!supaUser && window.supaUser) supaUser = window.supaUser;
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('appMain').style.display = 'block';
   const email = supaUser?.user?.email || supaUser?.user?.user_metadata?.nome || '';
@@ -1196,13 +1197,19 @@ async function abrirApp(){
   if(uiEl){ uiEl.style.display='flex'; }
   if(ueEl){ ueEl.textContent = email; }
   atualizarStatus('Carregando dados da nuvem...');
-  // Tenta carregar do Supabase
+
+  // Limpa dados locais para forçar busca do Supabase
+  lancs = [];
+  MS.forEach((_,i) => recs[i] = recs[i] || 0);
+
+  // Sempre busca do Supabase primeiro
   const temNuvem = await carregarDoSupabase();
   if(!temNuvem){
-    // Fallback: localStorage
+    // Fallback: localStorage apenas se Supabase falhar
     carregar();
     atualizarStatus('Dados locais carregados');
   } else {
+    salvar(); // Sincroniza localStorage com dados do Supabase
     atualizarStatus('Sincronizado ✓', '#6c4fd6');
     setTimeout(()=>atualizarStatus('Sincronizado com a nuvem ☁'), 2000);
   }
