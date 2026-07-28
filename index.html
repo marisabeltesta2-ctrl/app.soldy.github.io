@@ -57,14 +57,26 @@
   .logo { padding: 18px 16px; font-size: 20px; font-weight: 600; border-bottom: 0.5px solid var(--border); letter-spacing: -.4px; }
   .logo span { color: var(--green); }
   .logo small { display: block; font-size: 10px; font-weight: 400; color: var(--text-muted); letter-spacing: .2px; margin-top: 1px; }
-  .ni { display: flex; align-items: center; gap: 9px; padding: 10px 16px; font-size: 13px; color: var(--text-secondary); cursor: pointer; border-left: 2px solid transparent; transition: all .12s; }
+  .ni { display: flex; align-items: center; gap: 9px; padding: 9px 15px; font-size: 12px; color: var(--text-secondary); cursor: pointer; border-left: 2px solid transparent; transition: all .12s; border-radius: 0; }
   .ni:hover { color: var(--text-primary); background: var(--surface-2); }
-  .ni.on { color: var(--text-primary); background: var(--surface-2); border-left-color: var(--purple); }
+  .ni.on { color: var(--text-primary); background: var(--surface-2); border-left-color: var(--purple); font-weight: 500; }
+  .ni i { font-size: 15px; flex-shrink: 0; }
+
+  /* cores por seção */
+  .ni[data-sec="dash"].on    { border-left-color: #6c4fd6; color: #6c4fd6; background: rgba(108,79,214,0.08); }
+  .ni[data-sec="lancar"].on  { border-left-color: #1baf7a; color: #1baf7a; background: rgba(27,175,122,0.08); }
+  .ni[data-sec="cat"].on     { border-left-color: #2a78d6; color: #2a78d6; background: rgba(42,120,214,0.08); }
+  .ni[data-sec="evolucao"].on{ border-left-color: #eda100; color: #eda100; background: rgba(237,161,0,0.08); }
+  .ni[data-sec="rec"].on     { border-left-color: #1baf7a; color: #1baf7a; background: rgba(27,175,122,0.08); }
+  .ni[data-sec="lim"].on     { border-left-color: #e34948; color: #e34948; background: rgba(227,73,72,0.08); }
+  .ni[data-sec="metas"].on   { border-left-color: #c8a84b; color: #c8a84b; background: rgba(200,168,75,0.08); }
+  .ni[data-sec="rel"].on     { border-left-color: #4a3aa7; color: #4a3aa7; background: rgba(74,58,167,0.08); }
+  .ni[data-sec="hist"].on    { border-left-color: #888780; color: var(--text-primary); background: var(--surface-2); }
   .ni i { font-size: 16px; flex-shrink: 0; }
   .mpanel { padding: 12px; border-top: 0.5px solid var(--border); margin-top: auto; }
   .mlbl { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 7px; }
   .mgrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; }
-  .mb { font-size: 10px; padding: 5px 2px; text-align: center; border-radius: 4px; cursor: pointer; border: 0.5px solid var(--border); background: var(--surface-2); color: var(--text-secondary); transition: all .1s; }
+  .mb { font-size: 11px; padding: 5px 10px; text-align: center; border-radius: 6px; cursor: pointer; border: 0.5px solid var(--border); background: var(--surface-2); color: var(--text-secondary); transition: all .1s; white-space: nowrap; }
   .mb:hover { color: var(--text-primary); background: var(--surface-0); }
   .mb.on { background: var(--purple); color: #fff; border-color: var(--purple); }
 
@@ -261,14 +273,15 @@
     </svg>
     <small>gestão financeira</small>
   </div>
-  <div class="ni on" onclick="nav('dash',this)"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
-  <div class="ni" onclick="nav('lancar',this)"><i class="ti ti-plus"></i> Lançar</div>
-  <div class="ni" onclick="nav('cat',this)"><i class="ti ti-chart-donut"></i> Categorias</div>
-  <div class="ni" onclick="nav('evolucao',this)"><i class="ti ti-chart-line"></i> Evolução</div>
-  <div class="ni" onclick="nav('rec',this)"><i class="ti ti-coin"></i> Receitas</div>
-  <div class="ni" onclick="nav('lim',this)"><i class="ti ti-target"></i> Limites</div>
-  <div class="ni" onclick="nav('rel',this)"><i class="ti ti-report"></i> Relatório</div>
-  <div class="ni" onclick="nav('hist',this)"><i class="ti ti-list"></i> Histórico</div>
+  <div class="ni on" data-sec="dash" onclick="nav('dash',this)"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
+  <div class="ni" data-sec="lancar" onclick="nav('lancar',this)"><i class="ti ti-plus"></i> Lançar</div>
+  <div class="ni" data-sec="cat" onclick="nav('cat',this)"><i class="ti ti-chart-donut"></i> Categorias</div>
+  <div class="ni" data-sec="evolucao" onclick="nav('evolucao',this)"><i class="ti ti-chart-line"></i> Evolução</div>
+  <div class="ni" data-sec="rec" onclick="nav('rec',this)"><i class="ti ti-coin"></i> Receitas</div>
+  <div class="ni" data-sec="lim" onclick="nav('lim',this)"><i class="ti ti-target"></i> Limites</div>
+  <div class="ni" data-sec="metas" onclick="nav('metas',this)"><i class="ti ti-trophy"></i> Metas</div>
+  <div class="ni" data-sec="rel" onclick="nav('rel',this)"><i class="ti ti-report"></i> Relatório</div>
+  <div class="ni" data-sec="hist" onclick="nav('hist',this)"><i class="ti ti-list"></i> Histórico</div>
   <div class="ni" onclick="exportarExcel()" style="color:var(--purple);font-weight:500"><i class="ti ti-file-spreadsheet"></i> Exportar Excel</div>
   <div style="padding:6px 16px 0"><span class="tst" id="tExport"></span></div>
   <div class="ni" onclick="exportarDados()" style="color:#c8a84b;font-weight:500"><i class="ti ti-cloud-upload"></i> Salvar backup</div>
@@ -276,13 +289,14 @@
   <input type="file" id="importInput" accept=".soldy" style="display:none" onchange="importarDados(event)">
   <div style="padding:2px 16px 6px"><span class="tst" id="tBackup"></span></div>
   <div class="ni" onclick="sair()" style="color:#e34948"><i class="ti ti-logout"></i> Sair</div>
-  <div class="mpanel">
-    <div class="mlbl">Mês</div>
-    <div class="mgrid" id="mgrid"></div>
-  </div>
 </div>
 
 <div class="main">
+  <!-- BARRA DE MESES NO TOPO -->
+  <div style="background:var(--surface-1);border-radius:10px;padding:10px 14px;margin-bottom:14px;border:0.5px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+    <span style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-right:4px;flex-shrink:0">Mês</span>
+    <div id="mgrid" style="display:flex;flex-wrap:wrap;gap:4px;flex:1"></div>
+  </div>
 
   <!-- DASHBOARD -->
   <div class="sec on" id="s-dash">
@@ -395,6 +409,20 @@
       <div class="btn-row" style="margin-top:14px">
         <button class="bgr" onclick="saveLim()"><i class="ti ti-check"></i> Salvar limites</button>
         <span class="tst" id="tLim"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- METAS -->
+  <div class="sec" id="s-metas">
+    <div class="fcard">
+      <div class="ftitle"><i class="ti ti-trophy" style="color:#c8a84b"></i>Minhas metas financeiras</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Defina suas metas e acompanhe o progresso. Clique em <strong>+ Nova meta</strong> para adicionar.</p>
+      <div id="metasList"></div>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="bgr" onclick="addMeta()"><i class="ti ti-plus"></i> Nova meta</button>
+        <button class="bgr" onclick="saveMetas()" style="background:#c8a84b"><i class="ti ti-check"></i> Salvar metas</button>
+        <span class="tst" id="tMetas"></span>
       </div>
     </div>
   </div>
@@ -596,7 +624,7 @@ function nav(id,el){
   render(id);
 }
 function render(id){
-  ({dash:renderDash,lancar:renderLancar,cat:renderCat,evolucao:renderEvolucao,rec:renderRec,lim:renderLim,rel:renderRel,hist:renderHist})[id]?.();
+  ({dash:renderDash,lancar:renderLancar,cat:renderCat,evolucao:renderEvolucao,rec:renderRec,lim:renderLim,rel:renderRel,hist:renderHist,metas:renderMetasEditor})[id]?.();
 }
 
 function renderMes(){
@@ -978,6 +1006,70 @@ async function sair(){
   location.reload();
 }
 
+function renderMetasEditor(){
+  const el = document.getElementById('metasList');
+  if(!el) return;
+  const cores = ['#6c4fd6','#c8a84b','#1baf7a','#e34948','#2a78d6','#eb6834'];
+  el.innerHTML = metas.map((m,i) => `
+    <div style="background:var(--surface-2);border-radius:8px;padding:14px;margin-bottom:10px;border:0.5px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:500;color:var(--text-primary)">Meta ${i+1}</div>
+        <button onclick="removeMeta(${i})" style="background:none;border:none;color:#e34948;cursor:pointer;font-size:13px"><i class="ti ti-trash"></i></button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px">
+        <div class="fgrp" style="grid-column:span 3">
+          <label class="flbl">Nome da meta</label>
+          <input class="fi" id="metaNome${i}" value="${m.n}" placeholder="Ex: Viagem, Reserva, Carro...">
+        </div>
+        <div class="fgrp">
+          <label class="flbl">Valor atual (R$)</label>
+          <input class="fi" id="metaAtual${i}" type="number" value="${m.atual}" min="0" step="100" placeholder="0">
+        </div>
+        <div class="fgrp">
+          <label class="flbl">Meta total (R$)</label>
+          <input class="fi" id="metaTotal${i}" type="number" value="${m.meta}" min="0" step="100" placeholder="0">
+        </div>
+        <div class="fgrp">
+          <label class="flbl">Cor</label>
+          <select class="fi" id="metaCor${i}">
+            ${cores.map(c => `<option value="${c}" ${m.cl===c?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px">
+          <span>Progresso</span>
+          <span style="color:${m.cl}">${Math.round(m.atual/m.meta*100)}% — ${fmt(m.atual)} de ${fmt(m.meta)}</span>
+        </div>
+        <div class="prog-bg"><div class="prog-fill" style="width:${Math.min(Math.round(m.atual/m.meta*100),100)}%;background:${m.cl}"></div></div>
+      </div>
+    </div>`).join('') || '<div style="font-size:12px;color:var(--text-muted);padding:10px 0">Nenhuma meta cadastrada. Clique em "+ Nova meta" para começar!</div>';
+}
+
+function addMeta(){
+  metas.push({n:'Nova meta',atual:0,meta:10000,cl:'#6c4fd6'});
+  renderMetasEditor();
+}
+
+function removeMeta(i){
+  if(!confirm('Remover esta meta?')) return;
+  metas.splice(i,1);
+  renderMetasEditor();
+}
+
+function saveMetas(){
+  metas = metas.map((m,i) => ({
+    n: document.getElementById('metaNome'+i)?.value || m.n,
+    atual: parseFloat(document.getElementById('metaAtual'+i)?.value)||0,
+    meta: parseFloat(document.getElementById('metaTotal'+i)?.value)||0,
+    cl: document.getElementById('metaCor'+i)?.value || m.cl
+  }));
+  salvarNoSupabase();
+  salvar();
+  toast('tMetas','Metas salvas!');
+  renderMetasEditor();
+}
+
 // ── SINCRONIZAÇÃO COM SUPABASE SDK ────────────────────────────
 async function carregarDoSupabase(){
   const supa = getSupa();
@@ -1102,4 +1194,3 @@ async function abrirApp(){
 </script>
 </body>
 </html>
-
