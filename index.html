@@ -245,21 +245,6 @@ async function sdEsqueciSenha(){
   if(!error){alert('✅ E-mail de recuperação enviado para '+email+'!\nVerifique sua caixa de entrada.');}
   else{alert('❌ Não foi possível enviar. Verifique o endereço digitado.');}
 }
-  try{
-    var r = await fetch('https://bpuolrltdkmdeynlkzlk.supabase.co/auth/v1/recover',{
-      method:'POST',
-      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdW9scmx0ZGttZGV5bmxremxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMjY1ODYsImV4cCI6MjA5OTcwMjU4Nn0.Ut_FoajTCwL5IlqTQlBNTSuNuMHd47by3MbuYHupVhs','Content-Type':'application/json'},
-      body:JSON.stringify({email:email})
-    });
-    if(r.ok){
-      alert('✅ E-mail de recuperação enviado para ' + email + '!\nVerifique sua caixa de entrada.');
-    } else {
-      alert('❌ Não foi possível enviar o e-mail. Verifique o endereço digitado.');
-    }
-  } catch(e){
-    alert('Erro de conexão. Verifique sua internet.');
-  }
-}
 </script>
 
 <!-- TELA DE LOGIN -->
@@ -975,88 +960,6 @@ document.querySelector('.logo').insertAdjacentHTML('afterend',
 function atualizarStatus(msg, cor){
   const el=document.getElementById('saveMsg');
   if(el){ el.textContent=msg; el.style.color=cor||'var(--text-muted)'; }
-}
-
-// ── SUPABASE ─────────────────────────────────────────────────
-const SUPA_URL = 'https://bpuolrltdkmdeynlkzlk.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdW9scmx0ZGttZGV5bmxremxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMjY1ODYsImV4cCI6MjA5OTcwMjU4Nn0.Ut_FoajTCwL5IlqTQlBNTSuNuMHd47by3MbuYHupVhs';
-let supaUser = null;
-
-async function supaFetch(path, method='GET', body=null, token=null){
-  const headers = {
-    'apikey': SUPA_KEY,
-    'Content-Type': 'application/json',
-    'Prefer': 'return=representation'
-  };
-  if(token) headers['Authorization'] = 'Bearer ' + token;
-  const opts = { method, headers };
-  if(body) opts.body = JSON.stringify(body);
-  const res = await fetch(SUPA_URL + path, opts);
-  const text = await res.text();
-  try { return { ok: res.ok, status: res.status, data: JSON.parse(text) }; }
-  catch { return { ok: res.ok, status: res.status, data: text }; }
-}
-
-async function fazerLogin(){
-  const email = document.getElementById('loginEmail').value.trim();
-  const senha = document.getElementById('loginSenha').value;
-  const erro  = document.getElementById('erroLogin');
-  const btn   = document.getElementById('btnEntrar');
-  if(!email||!senha){ mostrarErro('erroLogin','erroLoginMsg','Preencha e-mail e senha.'); return; }
-  btn.textContent = 'Entrando...'; btn.disabled = true;
-  const r = await supaFetch('/auth/v1/token?grant_type=password','POST',{email,password:senha});
-  btn.innerHTML = '<i class="ti ti-login" style="margin-right:6px;vertical-align:-2px"></i>Entrar';
-  btn.disabled = false;
-  if(r.ok && r.data.access_token){
-    supaUser = r.data;
-    localStorage.setItem('soldy_session', JSON.stringify({
-      access_token: r.data.access_token,
-      refresh_token: r.data.refresh_token,
-      user: r.data.user
-    }));
-    abrirApp();
-  } else {
-    mostrarErro('erroLogin','erroLoginMsg', r.data?.error_description || r.data?.msg || 'E-mail ou senha incorretos.');
-  }
-}
-
-async function criarConta(){
-  const nome  = document.getElementById('criarNome').value.trim();
-  const email = document.getElementById('criarEmail').value.trim();
-  const senha = document.getElementById('criarSenha').value;
-  const btn   = document.getElementById('btnCriar');
-  if(!nome||!email||!senha){ mostrarErro('erroCriar','erroCriarMsg','Preencha todos os campos.'); return; }
-  if(senha.length < 6){ mostrarErro('erroCriar','erroCriarMsg','Senha precisa ter no mínimo 6 caracteres.'); return; }
-  btn.textContent = 'Criando conta...'; btn.disabled = true;
-  const r = await supaFetch('/auth/v1/signup','POST',{email,password:senha,data:{nome}});
-  btn.innerHTML = '<i class="ti ti-user-plus" style="margin-right:6px;vertical-align:-2px"></i>Criar conta grátis';
-  btn.disabled = false;
-  if(r.ok && r.data.id){
-    document.getElementById('erroCriar').style.display='none';
-    document.getElementById('sucessoCriar').style.display='block';
-    // tenta logar direto se não precisar de confirmação
-    if(r.data.email_confirmed_at || r.data.confirmed_at){
-      setTimeout(()=>{ mostrarTab('entrar'); document.getElementById('loginEmail').value=email; },1500);
-    }
-  } else {
-    mostrarErro('erroCriar','erroCriarMsg', r.data?.error_description || r.data?.msg || 'Erro ao criar conta.');
-  }
-}
-
-function mostrarErro(divId, spanId, msg){
-  const div = document.getElementById(divId);
-  const sp  = document.getElementById(spanId);
-  if(sp) sp.textContent = msg;
-  if(div){ div.style.display='block'; setTimeout(()=>div.style.display='none',4000); }
-}
-
-function mostrarTab(tab){
-  document.getElementById('cardEntrar').style.display = tab==='entrar'?'block':'none';
-  document.getElementById('cardCriar').style.display  = tab==='criar' ?'block':'none';
-  document.getElementById('tabEntrar').style.background = tab==='entrar'?'#6c4fd6':'transparent';
-  document.getElementById('tabEntrar').style.color      = tab==='entrar'?'#fff':'#7f77dd';
-  document.getElementById('tabCriar').style.background  = tab==='criar' ?'#c8a84b':'transparent';
-  document.getElementById('tabCriar').style.color       = tab==='criar' ?'#1a1040':'#7f77dd';
 }
 
 function toggleSenha(inputId, iconId){
