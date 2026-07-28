@@ -273,6 +273,12 @@
     </svg>
     <small>gestão financeira</small>
   </div>
+  <div id="saveStatus" style="padding:5px 14px;font-size:10px;color:var(--text-muted);border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:5px">
+    <i class="ti ti-cloud" style="font-size:11px"></i><span id="saveMsg">Conectando...</span>
+  </div>
+  <div id="userInfo" style="padding:5px 14px;font-size:10px;color:var(--text-muted);border-bottom:0.5px solid var(--border);display:none;align-items:center;gap:5px">
+    <i class="ti ti-user" style="font-size:11px"></i><span id="userEmail" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+  </div>
   <div class="ni on" data-sec="dash" onclick="nav('dash',this)"><i class="ti ti-layout-dashboard"></i> Dashboard</div>
   <div class="ni" data-sec="lancar" onclick="nav('lancar',this)"><i class="ti ti-plus"></i> Lançar</div>
   <div class="ni" data-sec="cat" onclick="nav('cat',this)"><i class="ti ti-chart-donut"></i> Categorias</div>
@@ -288,6 +294,7 @@
   <div class="ni" onclick="document.getElementById('importInput').click()" style="color:#c8a84b;font-weight:500"><i class="ti ti-cloud-download"></i> Carregar backup</div>
   <input type="file" id="importInput" accept=".soldy" style="display:none" onchange="importarDados(event)">
   <div style="padding:2px 16px 6px"><span class="tst" id="tBackup"></span></div>
+  <div class="ni" onclick="limparDados()" style="color:var(--text-muted);font-size:11px"><i class="ti ti-trash"></i> Limpar dados locais</div>
   <div class="ni" onclick="sair()" style="color:#e34948"><i class="ti ti-logout"></i> Sair</div>
 </div>
 
@@ -969,23 +976,6 @@ function toast(id,msg,err=false){
   el.textContent=msg; el.className='tst show'+(err?' e':'');
   setTimeout(()=>el.className='tst',2500);
 }
-
-// Botão de limpar dados no sidebar
-document.querySelector('.mpanel').insertAdjacentHTML('beforeend',
-  `<button onclick="limparDados()" style="width:100%;margin-top:10px;padding:6px;font-size:10px;background:none;border:0.5px solid var(--border-strong);color:var(--text-muted);border-radius:6px;cursor:pointer;font-family:inherit">
-    <i class="ti ti-trash" style="font-size:12px;vertical-align:-2px;margin-right:4px"></i>Limpar dados locais
-  </button>`
-);
-
-// Indicador de status
-document.querySelector('.logo').insertAdjacentHTML('afterend',
-  `<div id="saveStatus" style="padding:6px 16px;font-size:10px;color:var(--text-muted);border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:5px">
-    <i class="ti ti-cloud" style="font-size:12px"></i><span id="saveMsg">Conectando...</span>
-  </div>
-  <div id="userInfo" style="padding:6px 16px;font-size:10px;color:var(--text-muted);border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:5px;display:none">
-    <i class="ti ti-user" style="font-size:12px"></i><span id="userEmail" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-  </div>`
-);
 
 function atualizarStatus(msg, cor){
   const el=document.getElementById('saveMsg');
