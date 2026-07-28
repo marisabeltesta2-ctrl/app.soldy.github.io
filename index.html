@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --surface-0: #f4f3ef;
@@ -169,11 +170,18 @@
   }
 </style>
 </head>
-<!-- SOLDY v3.1 - Gestão Financeira -->
+<!-- SOLDY v4.0 - Gestão Financeira com Supabase SDK -->
 <body>
 
 <!-- SCRIPT DE LOGIN - CARREGA PRIMEIRO -->
 <script>
+const SUPA_URL = 'https://bpuolrltdkmdeynlkzlk.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdW9scmx0ZGttZGV5bmxremxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMjY1ODYsImV4cCI6MjA5OTcwMjU4Nn0.Ut_FoajTCwL5IlqTQlBNTSuNuMHd47by3MbuYHupVhs';
+let _supa = null;
+function getSupa(){
+  if(!_supa && window.supabase) _supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  return _supa;
+}
 function sdToggleSenha(inputId, iconId){
   var i=document.getElementById(inputId);
   var ic=document.getElementById(iconId);
@@ -196,104 +204,47 @@ async function sdFazerLogin(){
   var btn   = document.getElementById('btnEntrar');
   var erro  = document.getElementById('erroLogin');
   var errMsg= document.getElementById('erroLoginMsg');
-  if(!email||!senha){
-    errMsg.textContent='Preencha e-mail e senha.';
-    erro.style.display='block';
-    setTimeout(function(){erro.style.display='none';},3000);
-    return;
-  }
-  btn.textContent='Entrando...';
-  btn.disabled=true;
-  try{
-    var r=await fetch('https://bpuolrltdkmdeynlkzlk.supabase.co/auth/v1/token?grant_type=password',{
-      method:'POST',
-      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdW9scmx0ZGttZGV5bmxremxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMjY1ODYsImV4cCI6MjA5OTcwMjU4Nn0.Ut_FoajTCwL5IlqTQlBNTSuNuMHd47by3MbuYHupVhs','Content-Type':'application/json'},
-      body:JSON.stringify({email:email,password:senha})
-    });
-    var d=await r.json();
-    if(r.ok&&d.access_token){
-      window._soldyUser=d;
-      window.supaUser=d;
-      localStorage.setItem('soldy_session',JSON.stringify({
-        access_token:d.access_token,
-        refresh_token:d.refresh_token,
-        user:d.user
-      }));
-      document.getElementById('loginScreen').style.display='none';
-      document.getElementById('appMain').style.display='block';
-      if(typeof abrirApp==='function') abrirApp();
-      else if(typeof iniciarApp==='function') iniciarApp();
-    } else {
-      errMsg.textContent=d.error_description||d.msg||'E-mail ou senha incorretos.';
-      erro.style.display='block';
-      setTimeout(function(){erro.style.display='none';},4000);
-    }
-  } catch(e){
-    errMsg.textContent='Erro de conexão. Verifique sua internet.';
-    erro.style.display='block';
-    setTimeout(function(){erro.style.display='none';},4000);
-  }
+  if(!email||!senha){ errMsg.textContent='Preencha e-mail e senha.'; erro.style.display='block'; setTimeout(function(){erro.style.display='none';},3000); return; }
+  btn.textContent='Entrando...'; btn.disabled=true;
+  const supa = getSupa();
+  if(!supa){ errMsg.textContent='Erro ao conectar. Recarregue a página.'; erro.style.display='block'; btn.innerHTML='<i class="ti ti-login"></i> Entrar'; btn.disabled=false; return; }
+  const {data, error} = await supa.auth.signInWithPassword({email:email, password:senha});
   btn.innerHTML='<i class="ti ti-login" style="margin-right:6px;vertical-align:-2px"></i>Entrar';
   btn.disabled=false;
+  if(error){ errMsg.textContent=error.message==='Invalid login credentials'?'E-mail ou senha incorretos.':error.message; erro.style.display='block'; setTimeout(function(){erro.style.display='none';},4000); return; }
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appMain').style.display='block';
+  if(typeof abrirApp==='function') abrirApp();
 }
 
 async function sdCriarConta(){
-  var nome  = document.getElementById('criarNome').value.trim();
-  var email = document.getElementById('criarEmail').value.trim();
-  var senha = document.getElementById('criarSenha').value;
-  var btn   = document.getElementById('btnCriar');
-  var erro  = document.getElementById('erroCriar');
-  var errMsg= document.getElementById('erroCriarMsg');
-  var ok    = document.getElementById('sucessoCriar');
-  if(!nome||!email||!senha){
-    errMsg.textContent='Preencha todos os campos.';
-    erro.style.display='block';
-    setTimeout(function(){erro.style.display='none';},3000);
-    return;
-  }
-  if(senha.length<6){
-    errMsg.textContent='Senha precisa ter no mínimo 6 caracteres.';
-    erro.style.display='block';
-    setTimeout(function(){erro.style.display='none';},3000);
-    return;
-  }
-  btn.textContent='Criando conta...';
-  btn.disabled=true;
-  try{
-    var r=await fetch('https://bpuolrltdkmdeynlkzlk.supabase.co/auth/v1/signup',{
-      method:'POST',
-      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdW9scmx0ZGttZGV5bmxremxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMjY1ODYsImV4cCI6MjA5OTcwMjU4Nn0.Ut_FoajTCwL5IlqTQlBNTSuNuMHd47by3MbuYHupVhs','Content-Type':'application/json'},
-      body:JSON.stringify({email:email,password:senha,data:{nome:nome}})
-    });
-    var d=await r.json();
-    if(r.ok&&d.id){
-      erro.style.display='none';
-      ok.style.display='block';
-      setTimeout(function(){
-        sdMostrarTab('entrar');
-        document.getElementById('loginEmail').value=email;
-      },2000);
-    } else {
-      errMsg.textContent=d.error_description||d.msg||'Erro ao criar conta. Tente outro e-mail.';
-      erro.style.display='block';
-      setTimeout(function(){erro.style.display='none';},4000);
-    }
-  } catch(e){
-    errMsg.textContent='Erro de conexão. Verifique sua internet.';
-    erro.style.display='block';
-    setTimeout(function(){erro.style.display='none';},4000);
-  }
+  var nome=document.getElementById('criarNome').value.trim();
+  var email=document.getElementById('criarEmail').value.trim();
+  var senha=document.getElementById('criarSenha').value;
+  var btn=document.getElementById('btnCriar');
+  var erro=document.getElementById('erroCriar');
+  var errMsg=document.getElementById('erroCriarMsg');
+  var ok=document.getElementById('sucessoCriar');
+  if(!nome||!email||!senha){errMsg.textContent='Preencha todos os campos.';erro.style.display='block';setTimeout(function(){erro.style.display='none';},3000);return;}
+  if(senha.length<6){errMsg.textContent='Senha mínimo 6 caracteres.';erro.style.display='block';setTimeout(function(){erro.style.display='none';},3000);return;}
+  btn.textContent='Criando conta...';btn.disabled=true;
+  const supa=getSupa();
+  const {data,error}=await supa.auth.signUp({email:email,password:senha,options:{data:{nome:nome}}});
   btn.innerHTML='<i class="ti ti-user-plus" style="margin-right:6px;vertical-align:-2px"></i>Criar conta grátis';
   btn.disabled=false;
+  if(error){errMsg.textContent=error.message||'Erro ao criar conta.';erro.style.display='block';setTimeout(function(){erro.style.display='none';},4000);return;}
+  erro.style.display='none';ok.style.display='block';
+  setTimeout(function(){sdMostrarTab('entrar');document.getElementById('loginEmail').value=email;},2000);
 }
 
 async function sdEsqueciSenha(){
-  var email = document.getElementById('loginEmail').value.trim();
-  if(!email){
-    alert('Digite seu e-mail no campo acima primeiro.');
-    document.getElementById('loginEmail').focus();
-    return;
-  }
+  var email=document.getElementById('loginEmail').value.trim();
+  if(!email){alert('Digite seu e-mail no campo acima primeiro.');return;}
+  const supa=getSupa();
+  const {error}=await supa.auth.resetPasswordForEmail(email);
+  if(!error){alert('✅ E-mail de recuperação enviado para '+email+'!\nVerifique sua caixa de entrada.');}
+  else{alert('❌ Não foi possível enviar. Verifique o endereço digitado.');}
+}
   try{
     var r = await fetch('https://bpuolrltdkmdeynlkzlk.supabase.co/auth/v1/recover',{
       method:'POST',
@@ -1116,35 +1067,35 @@ function toggleSenha(inputId, iconId){
 }
 
 async function sair(){
-  if(supaUser?.access_token){
-    await supaFetch('/auth/v1/logout','POST',null,supaUser.access_token);
-  }
+  const supa = getSupa();
+  if(supa) await supa.auth.signOut();
   localStorage.removeItem('soldy_session');
-  supaUser = null;
   location.reload();
 }
 
-// ── SINCRONIZAÇÃO COM SUPABASE ────────────────────────────────
+// ── SINCRONIZAÇÃO COM SUPABASE SDK ────────────────────────────
 async function carregarDoSupabase(){
-  const user = window.supaUser || supaUser || window._soldyUser;
-  if(!user) return false;
-  const tk = user.access_token;
-  const uid = user.user?.id;
-  if(!tk || !uid) return false;
+  const supa = getSupa();
+  if(!supa) return false;
   try {
+    const { data: { user }, error: authErr } = await supa.auth.getUser();
+    if(authErr || !user) return false;
+    const uid = user.id;
     // Carregar lançamentos
-    const rL = await supaFetch(`/rest/v1/lancamentos?user_id=eq.${uid}&order=id.asc`,'GET',null,tk);
-    if(rL.ok && Array.isArray(rL.data) && rL.data.length > 0){
-      lancs = rL.data.map(l=>({
-        id: l.id_local || l.id, desc: l.descricao, val: parseFloat(l.valor),
+    const { data: dataL, error: errL } = await supa.from('lancamentos').select('*').eq('user_id', uid);
+    if(errL){ console.error('Erro ao carregar lançamentos:', errL); return false; }
+    if(dataL && dataL.length > 0){
+      lancs = dataL.map(l=>({
+        id: l.id_local || Math.round(Math.random()*10000),
+        desc: l.descricao, val: parseFloat(l.valor),
         cat: l.categoria, tipo: l.tipo, mes: l.mes, ano: l.ano, data: l.data
       }));
       nid = Math.max(...lancs.map(l=>typeof l.id==='number'?l.id:0), 0) + 1;
-    }
+    } else { lancs = []; }
     // Carregar configurações
-    const rC = await supaFetch(`/rest/v1/configuracoes?user_id=eq.${uid}`,'GET',null,tk);
-    if(rC.ok && Array.isArray(rC.data) && rC.data.length > 0){
-      const cfg = rC.data[0];
+    const { data: dataC } = await supa.from('configuracoes').select('*').eq('user_id', uid);
+    if(dataC && dataC.length > 0){
+      const cfg = dataC[0];
       if(cfg.receitas) recs  = cfg.receitas;
       if(cfg.limites)  lims  = cfg.limites;
       if(cfg.metas)    metas = cfg.metas;
@@ -1154,27 +1105,30 @@ async function carregarDoSupabase(){
 }
 
 async function salvarNoSupabase(){
-  const user = window.supaUser || supaUser || window._soldyUser;
-  if(!user) return;
-  const tk  = user.access_token;
-  const uid = user.user?.id;
-  if(!tk || !uid) return;
+  const supa = getSupa();
+  if(!supa) return;
   try {
-    // Salvar lançamentos: upsert completo
-    const rows = lancs.map(l=>({
-      user_id: uid, id_local: typeof l.id==='number'?l.id:null,
-      descricao: l.desc, valor: l.val, categoria: l.cat,
-      tipo: l.tipo, mes: l.mes, ano: l.ano, data: l.data||null
-    }));
-    // Apaga tudo e reinserere (mais simples para HTML puro)
-    await supaFetch(`/rest/v1/lancamentos?user_id=eq.${uid}`,'DELETE',null,tk);
-    if(rows.length > 0){
-      await supaFetch('/rest/v1/lancamentos','POST',rows,tk);
+    const { data: { user } } = await supa.auth.getUser();
+    if(!user) return;
+    const uid = user.id;
+    // Salvar lançamentos
+    await supa.from('lancamentos').delete().eq('user_id', uid);
+    if(lancs.length > 0){
+      const rows = lancs.map(l=>({
+        user_id: uid,
+        id_local: typeof l.id==='number' ? l.id : null,
+        descricao: l.desc, valor: l.val, categoria: l.cat,
+        tipo: l.tipo, mes: l.mes, ano: l.ano, data: l.data||null
+      }));
+      const {error} = await supa.from('lancamentos').insert(rows);
+      if(error){ console.error('Erro ao salvar lançamentos:', error); throw error; }
     }
-    // Salvar configurações: upsert
-    const cfg = { user_id: uid, receitas: recs, limites: lims, metas };
-    await supaFetch(`/rest/v1/configuracoes?user_id=eq.${uid}`,'DELETE',null,tk);
-    await supaFetch('/rest/v1/configuracoes','POST',cfg,tk);
+    // Salvar configurações
+    await supa.from('configuracoes').delete().eq('user_id', uid);
+    const {error: errCfg} = await supa.from('configuracoes').insert({
+      user_id: uid, receitas: recs, limites: lims, metas: metas
+    });
+    if(errCfg){ console.error('Erro ao salvar configs:', errCfg); throw errCfg; }
     atualizarStatus('Sincronizado ✓', '#6c4fd6');
     setTimeout(()=>atualizarStatus('Sincronizado com a nuvem ☁'), 2000);
   } catch(e){
@@ -1183,33 +1137,28 @@ async function salvarNoSupabase(){
   }
 }
 
-// alias para compatibilidade com sdFazerLogin
 function iniciarApp(){ abrirApp(); }
 
 async function abrirApp(){
-  if(!supaUser && window._soldyUser) supaUser = window._soldyUser;
-  if(!supaUser && window.supaUser) supaUser = window.supaUser;
+  const supa = getSupa();
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('appMain').style.display = 'block';
-  const email = supaUser?.user?.email || supaUser?.user?.user_metadata?.nome || '';
-  const uiEl = document.getElementById('userInfo');
-  const ueEl = document.getElementById('userEmail');
-  if(uiEl){ uiEl.style.display='flex'; }
-  if(ueEl){ ueEl.textContent = email; }
+  // Mostra email do usuário
+  if(supa){
+    const { data: { user } } = await supa.auth.getUser();
+    const ueEl = document.getElementById('userEmail');
+    const uiEl = document.getElementById('userInfo');
+    if(user && ueEl){ ueEl.textContent = user.email; }
+    if(uiEl){ uiEl.style.display='flex'; }
+  }
   atualizarStatus('Carregando dados da nuvem...');
-
-  // Limpa dados locais para forçar busca do Supabase
   lancs = [];
-  MS.forEach((_,i) => recs[i] = recs[i] || 0);
-
-  // Sempre busca do Supabase primeiro
   const temNuvem = await carregarDoSupabase();
   if(!temNuvem){
-    // Fallback: localStorage apenas se Supabase falhar
     carregar();
     atualizarStatus('Dados locais carregados');
   } else {
-    salvar(); // Sincroniza localStorage com dados do Supabase
+    salvar();
     atualizarStatus('Sincronizado ✓', '#6c4fd6');
     setTimeout(()=>atualizarStatus('Sincronizado com a nuvem ☁'), 2000);
   }
@@ -1217,53 +1166,32 @@ async function abrirApp(){
   renderDash();
 }
 
-// alias para compatibilidade com sdFazerLogin
-function iniciarApp(){ abrirApp(); }
-
-// ── TENTATIVA DE RESTAURAR SESSÃO ────────────────────────────
-async function tentarRestaurarSessao(){
-  const sess = localStorage.getItem('soldy_session');
-  if(!sess) return false;
-  try {
-    const s = JSON.parse(sess);
-    // Primeiro tenta usar o token existente
-    if(s.access_token){
-      // Verifica se o token ainda é válido
-      const teste = await supaFetch('/auth/v1/user','GET',null,s.access_token);
-      if(teste.ok && teste.data.id){
-        supaUser = { access_token: s.access_token, refresh_token: s.refresh_token, user: teste.data };
-        window._soldyUser = supaUser;
-        window.supaUser = supaUser;
-        return true;
-      }
-    }
-    // Se não, tenta renovar com refresh token
-    if(s.refresh_token){
-      const r = await supaFetch('/auth/v1/token?grant_type=refresh_token','POST',{refresh_token: s.refresh_token});
-      if(r.ok && r.data.access_token){
-        supaUser = r.data;
-        window._soldyUser = supaUser;
-        window.supaUser = supaUser;
-        localStorage.setItem('soldy_session', JSON.stringify({
-          access_token: r.data.access_token,
-          refresh_token: r.data.refresh_token,
-          user: r.data.user
-        }));
-        return true;
-      }
-    }
-  } catch(e){ console.warn('Erro ao restaurar sessão:', e); }
-  localStorage.removeItem('soldy_session');
-  return false;
-}
-
-// ── INICIALIZAÇÃO ─────────────────────────────────────────────
+// ── INICIALIZAÇÃO COM SUPABASE SDK ────────────────────────────
 (async function init(){
-  const logado = await tentarRestaurarSessao();
-  if(logado){
+  // O SDK do Supabase gerencia sessão automaticamente
+  const supa = getSupa();
+  if(!supa){
+    console.error('Supabase SDK não carregado!');
+    return;
+  }
+  // Verifica se há sessão ativa
+  const { data: { session } } = await supa.auth.getSession();
+  if(session){
     await abrirApp();
   }
-  // Salva também ao sair/fechar a aba
+  // Escuta mudanças de autenticação
+  supa.auth.onAuthStateChange(async (event, session) => {
+    if(event === 'SIGNED_IN' && session){
+      if(document.getElementById('loginScreen').style.display !== 'none'){
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appMain').style.display = 'block';
+        await abrirApp();
+      }
+    }
+    if(event === 'SIGNED_OUT'){
+      location.reload();
+    }
+  });
   window.addEventListener('beforeunload', ()=>{ salvar(); });
 })();
 </script>
