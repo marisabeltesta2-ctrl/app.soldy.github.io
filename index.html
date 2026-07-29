@@ -397,7 +397,8 @@
         <div style="position:relative;height:230px"><canvas id="groupC"></canvas></div>
       </div>
       <div class="card">
-        <div class="ct">Saldo acumulado no mês</div>
+        <div class="ct">Saldo ao longo do mês</div>
+        <div id="areaMsg" style="font-size:12px;color:var(--text-muted);display:none;padding:20px 0;text-align:center"><i class="ti ti-info-circle" style="margin-right:6px"></i>Cadastre sua receita em <strong>Receitas</strong> para visualizar este gráfico.</div>
         <div style="position:relative;height:190px"><canvas id="areaC"></canvas></div>
       </div>
       <div class="card">
@@ -1032,15 +1033,27 @@ async function sair(){
 function renderMetasEditor(){
   const el = document.getElementById('metasList');
   if(!el) return;
-  const cores = ['#6c4fd6','#c8a84b','#1baf7a','#e34948','#2a78d6','#eb6834'];
+  const cores = [
+    {nome:'Roxo',    val:'#6c4fd6'},
+    {nome:'Dourado', val:'#c8a84b'},
+    {nome:'Verde',   val:'#1baf7a'},
+    {nome:'Vermelho',val:'#e34948'},
+    {nome:'Azul',    val:'#2a78d6'},
+    {nome:'Laranja', val:'#eb6834'},
+    {nome:'Rosa',    val:'#e87ba4'},
+    {nome:'Cinza',   val:'#888780'},
+  ];
   el.innerHTML = metas.map((m,i) => `
     <div style="background:var(--surface-2);border-radius:8px;padding:14px;margin-bottom:10px;border:0.5px solid var(--border)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div style="font-size:12px;font-weight:500;color:var(--text-primary)">Meta ${i+1}</div>
+        <div style="font-size:12px;font-weight:500;color:var(--text-primary);display:flex;align-items:center;gap:8px">
+          <div style="width:12px;height:12px;border-radius:50%;background:${m.cl};flex-shrink:0"></div>
+          Meta ${i+1}
+        </div>
         <button onclick="removeMeta(${i})" style="background:none;border:none;color:#e34948;cursor:pointer;font-size:13px"><i class="ti ti-trash"></i></button>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px">
-        <div class="fgrp" style="grid-column:span 3">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px">
+        <div class="fgrp" style="grid-column:span 2">
           <label class="flbl">Nome da meta</label>
           <input class="fi" id="metaNome${i}" value="${m.n}" placeholder="Ex: Viagem, Reserva, Carro...">
         </div>
@@ -1052,14 +1065,16 @@ function renderMetasEditor(){
           <label class="flbl">Meta total (R$)</label>
           <input class="fi" id="metaTotal${i}" type="number" value="${m.meta}" min="0" step="100" placeholder="0">
         </div>
-        <div class="fgrp">
-          <label class="flbl">Cor</label>
-          <select class="fi" id="metaCor${i}">
-            ${cores.map(c => `<option value="${c}" ${m.cl===c?'selected':''}>${c}</option>`).join('')}
-          </select>
-        </div>
       </div>
-      <div style="margin-top:10px">
+      <label class="flbl" style="margin-bottom:6px;display:block">Cor</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        ${cores.map(c=>`
+          <div onclick="selecionarCorMeta(${i},'${c.val}')" title="${c.nome}"
+            style="width:28px;height:28px;border-radius:50%;background:${c.val};cursor:pointer;border:3px solid ${m.cl===c.val?'var(--text-primary)':'transparent'};transition:border .15s;flex-shrink:0" 
+            id="corBtn${i}_${c.val.replace('#','')}">
+          </div>`).join('')}
+      </div>
+      <div>
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px">
           <span>Progresso</span>
           <span style="color:${m.cl}">${Math.round(m.atual/m.meta*100)}% — ${fmt(m.atual)} de ${fmt(m.meta)}</span>
@@ -1067,6 +1082,11 @@ function renderMetasEditor(){
         <div class="prog-bg"><div class="prog-fill" style="width:${Math.min(Math.round(m.atual/m.meta*100),100)}%;background:${m.cl}"></div></div>
       </div>
     </div>`).join('') || '<div style="font-size:12px;color:var(--text-muted);padding:10px 0">Nenhuma meta cadastrada. Clique em "+ Nova meta" para começar!</div>';
+}
+
+function selecionarCorMeta(i, cor){
+  metas[i].cl = cor;
+  renderMetasEditor();
 }
 
 function addMeta(){
@@ -1085,7 +1105,7 @@ function saveMetas(){
     n: document.getElementById('metaNome'+i)?.value || m.n,
     atual: parseFloat(document.getElementById('metaAtual'+i)?.value)||0,
     meta: parseFloat(document.getElementById('metaTotal'+i)?.value)||0,
-    cl: document.getElementById('metaCor'+i)?.value || m.cl
+    cl: m.cl
   }));
   salvarNoSupabase();
   salvar();
