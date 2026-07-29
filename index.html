@@ -763,9 +763,31 @@ function renderCat(){
 function renderEvolucao(){
   const ct=catTotals(cM,cA);
   mkC('groupC',{type:'bar',data:{labels:CK,datasets:[{label:'2 meses atrás',data:CK.map(c=>Math.round((ct[c]||0)*0.72)),backgroundColor:'rgba(108,79,214,0.28)',borderRadius:3},{label:'Mês anterior',data:CK.map(c=>Math.round((ct[c]||0)*0.9)),backgroundColor:'rgba(108,79,214,0.58)',borderRadius:3},{label:'Atual',data:CK.map(c=>ct[c]||0),backgroundColor:PURPLE,borderRadius:3}]},options:{...gOpts,scales:{x:{...xAx,ticks:{color:tc,font:{size:9},maxRotation:30}},y:yAx(v=>fmt(v))}}});
-  const rec=recs[cM]||0; const dd=getDailyTotals(cM,cA); let acum=rec;
-  const days=Object.keys(dd).map(Number).sort((a,b)=>a-b);
-  mkC('areaC',{type:'line',data:{labels:days.map(d=>d+'/'+String(cM+1).padStart(2,'0')),datasets:[{data:days.map(d=>{acum-=dd[d];return Math.round(acum);}),borderColor:GOLD,backgroundColor:'rgba(200,168,75,0.09)',borderWidth:2,tension:0.4,fill:true,pointRadius:0}]},options:{...gOpts,scales:{x:xAx,y:yAx(v=>fmt(v))}}});
+  const rec=recs[cM]||0;
+  const dd=getDailyTotals(cM,cA);
+  // Mostra gráfico apenas se houver receita
+  const areaMsgEl = document.getElementById('areaMsg');
+  if(!rec){
+    if(areaMsgEl) areaMsgEl.style.display='block';
+    document.getElementById('areaC').style.display='none';
+  } else {
+    if(areaMsgEl) areaMsgEl.style.display='none';
+    document.getElementById('areaC').style.display='block';
+    // Monta série completa do dia 1 ao último dia com gasto
+    const diasComGasto = Object.keys(dd).map(Number).sort((a,b)=>a-b);
+    const ultimoDia = diasComGasto.length > 0 ? diasComGasto[diasComGasto.length-1] : 1;
+    const labels = ['01/'+String(cM+1).padStart(2,'0')];
+    const valores = [rec];
+    let acum = rec;
+    for(let d=1; d<=ultimoDia; d++){
+      if(dd[d]){
+        acum -= dd[d];
+        labels.push(d+'/'+String(cM+1).padStart(2,'0'));
+        valores.push(Math.round(acum));
+      }
+    }
+    mkC('areaC',{type:'line',data:{labels,datasets:[{data:valores,borderColor:acum>=0?GOLD:'#e34948',backgroundColor:acum>=0?'rgba(200,168,75,0.09)':'rgba(227,73,72,0.09)',borderWidth:2,tension:0.4,fill:true,pointRadius:3,pointBackgroundColor:acum>=0?GOLD:'#e34948'}]},options:{...gOpts,scales:{x:xAx,y:yAx(v=>fmt(v))}}});
+  }
   const desp=getLancs(cM,cA).filter(l=>l.tipo==='Despesa').reduce((a,l)=>a+l.val,0);
   const saldos=[980,1250,1700,1200,860,Math.round(rec-desp)];
   const sm=cM>=5?MS.slice(cM-5,cM+1):[...MS.slice(12-(5-cM)),MS[cM]];
