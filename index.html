@@ -276,15 +276,15 @@
 
 <div class="sb">
   <div class="logo">
-    <svg width="110" height="36" viewBox="0 0 110 36" aria-label="Soldy logo">
-      <rect x="0" y="0" width="36" height="36" rx="8" fill="#1a1040"/>
-      <g transform="translate(18,18)">
-        <path d="M-6-12C-6-12-10-12-10-7C-10-3-6-1-1 1C4 3 8 5 8 9C8 14 4 14 4 14" fill="none" stroke="#c8a84b" stroke-width="3" stroke-linecap="round"/>
-        <path d="M6 12C6 12 10 12 10 7C10 3 6 1 1-1C-4-3-8-5-8-9C-8-14-4-14-4-14" fill="none" stroke="#7f77dd" stroke-width="3" stroke-linecap="round"/>
-        <circle cx="4" cy="-15" r="2" fill="#c8a84b"/>
-        <circle cx="-4" cy="15" r="2" fill="#7f77dd"/>
+    <svg width="130" height="44" viewBox="0 0 130 44" aria-label="Soldy logo">
+      <rect x="0" y="0" width="44" height="44" rx="10" fill="#1a1040"/>
+      <g transform="translate(22,22)">
+        <path d="M-7-14C-7-14-12-14-12-8C-12-4-7-1-1 2C5 5 10 8 10 13C10 19 5 19 5 19" fill="none" stroke="#c8a84b" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M7 14C7 14 12 14 12 8C12 4 7 1 1-2C-5-5-10-8-10-13C-10-19-5-19-5-19" fill="none" stroke="#7f77dd" stroke-width="3.5" stroke-linecap="round"/>
+        <circle cx="5" cy="-20" r="2.5" fill="#c8a84b"/>
+        <circle cx="-5" cy="20" r="2.5" fill="#7f77dd"/>
       </g>
-      <text x="44" y="24" font-family="Georgia,serif" font-size="18" font-weight="700" fill="#1a1040">Soldy</text>
+      <text x="52" y="28" font-family="Georgia,serif" font-size="22" font-weight="700" fill="#ffffff">Soldy</text>
     </svg>
     <small>gestão financeira</small>
   </div>
@@ -304,13 +304,9 @@
   <div class="ni" data-sec="rel" onclick="nav('rel',this)"><i class="ti ti-report"></i> Relatório</div>
   <div class="ni" data-sec="hist" onclick="nav('hist',this)"><i class="ti ti-list"></i> Histórico</div>
   <div class="sb-sep" style="margin-top:8px"></div>
+  <div class="sb-sep" style="margin-top:8px"></div>
   <div class="ni" onclick="exportarExcel()" style="color:rgba(255,255,255,0.35);font-size:11px"><i class="ti ti-file-spreadsheet" style="font-size:14px"></i> Exportar Excel</div>
   <div style="padding:6px 16px 0"><span class="tst" id="tExport"></span></div>
-  <div class="sb-sep"></div>
-  <div class="ni" onclick="exportarDados()" style="color:#fcd34d;font-size:11px"><i class="ti ti-cloud-upload" style="font-size:14px"></i> Salvar backup</div>
-  <div class="ni" onclick="document.getElementById('importInput').click()" style="color:#fcd34d;font-size:11px"><i class="ti ti-cloud-download" style="font-size:14px"></i> Carregar backup</div>
-  <input type="file" id="importInput" accept=".soldy" style="display:none" onchange="importarDados(event)">
-  <div style="padding:2px 16px 6px"><span class="tst" id="tBackup"></span></div>
   <div class="sb-sep"></div>
   <div class="ni" onclick="limparDados()" style="color:rgba(255,255,255,0.25);font-size:11px"><i class="ti ti-trash" style="font-size:13px"></i> Limpar dados locais</div>
   <div class="ni" onclick="sair()" style="color:#f87171;font-size:12px"><i class="ti ti-logout" style="font-size:15px"></i> Sair</div>
