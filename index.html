@@ -857,11 +857,12 @@ function saveRec(){
   const fontes = getRecFontes(cM).length > 0 ? getRecFontes(cM) : FONTES_PADRAO.map(f=>({...f, val:0}));
   const novasFontes = fontes.map((f,i)=>({...f, val: parseFloat(document.getElementById('fonte'+i)?.value)||0}));
   const total = novasFontes.reduce((a,f)=>a+f.val, 0);
-  getRecTotal(cM) = { total, fontes: novasFontes };
+  recs[cM] = { total, fontes: novasFontes };
   salvarNoSupabase();
   salvar();
   toast('tR','Receitas salvas!');
   renderRec();
+  setTimeout(()=>renderDash(), 300);
 }
 
 
