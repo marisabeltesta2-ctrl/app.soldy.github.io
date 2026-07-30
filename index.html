@@ -418,7 +418,6 @@
         <div class="btn-row" style="margin-top:4px">
           <button class="bgr" onclick="saveRec()"><i class="ti ti-check"></i> Salvar receitas</button>
           <span class="tst" id="tR"></span>
-          <div style="margin-left:auto;font-size:13px;color:var(--text-muted)">Total: <strong id="recTotal" style="color:var(--green);font-size:16px">R$ 0</strong></div>
         </div>
       </div>
     </div>
@@ -814,7 +813,15 @@ function getRecFontes(m){ const r=recs[m]; if(!r||typeof r==='number') return []
 function renderRec(){
   const mesLabel = document.getElementById('recMesLabel');
   if(mesLabel) mesLabel.textContent = MS[cM]+' '+cA;
+
+  // Compatibilidade: se recs[cM] for número antigo, converte
+  if(typeof recs[cM] === 'number'){
+    const val = recs[cM];
+    recs[cM] = { total: val, fontes: FONTES_PADRAO.map((f,i)=>({...f, val: i===0?val:0})) };
+  }
+
   const fontes = getRecFontes(cM).length > 0 ? getRecFontes(cM) : FONTES_PADRAO.map(f=>({...f, val:0}));
+
   const el = document.getElementById('fontesList');
   if(el){
     el.innerHTML = fontes.map((f,i)=>`
@@ -832,6 +839,7 @@ function renderRec(){
         <span id="recTotalInner" style="font-size:18px;font-weight:500;color:var(--green)">${fmt(getRecTotal(cM))}</span>
       </div>`;
   }
+
   const tbl = document.getElementById('recTbl');
   if(tbl) tbl.innerHTML=`<tr><th>Mês</th><th style="text-align:right;width:110px">Receita</th><th style="text-align:right;width:110px">Despesas</th><th style="text-align:right;width:110px">Saldo</th></tr>`+
     MS.map((m,i)=>{const r=getRecTotal(i);const d=getLancs(i,cA).filter(l=>l.tipo==='Despesa').reduce((a,l)=>a+l.val,0);const s=r-d;return`<tr><td>${m}</td><td style="text-align:right;color:var(--green)">${fmt(r)}</td><td style="text-align:right;color:var(--red)">${fmt(d)}</td><td style="text-align:right;font-weight:500;color:${s>=0?'var(--green)':'var(--red)'}">${fmt(s)}</td></tr>`;}).join('');
