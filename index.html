@@ -410,13 +410,16 @@
 
   <!-- RECEITAS -->
   <div class="sec" id="s-rec">
-    <div class="fcard">
-      <div class="ftitle"><i class="ti ti-coin" style="color:var(--green)"></i>Receitas mensais</div>
-      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Digite a receita esperada para cada mês e clique em Salvar.</p>
-      <div class="rcgrid" id="rcgrid"></div>
-      <div class="btn-row">
-        <button class="bgr" onclick="saveRec()"><i class="ti ti-check"></i> Salvar receitas</button>
-        <span class="tst" id="tR"></span>
+    <div class="g2" style="margin-bottom:12px">
+      <div class="card w2">
+        <div class="ftitle" style="margin-bottom:4px"><i class="ti ti-coin" style="color:var(--green)"></i>Fontes de renda — <span id="recMesLabel"></span></div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Cadastre todas as suas fontes de renda do mês. O total é calculado automaticamente.</p>
+        <div id="fontesList"></div>
+        <div class="btn-row" style="margin-top:4px">
+          <button class="bgr" onclick="saveRec()"><i class="ti ti-check"></i> Salvar receitas</button>
+          <span class="tst" id="tR"></span>
+          <div style="margin-left:auto;font-size:13px;color:var(--text-muted)">Total: <strong id="recTotal" style="color:var(--green);font-size:16px">R$ 0</strong></div>
+        </div>
       </div>
     </div>
     <div class="card">
@@ -610,8 +613,19 @@ let lancs=[
   {id:23,desc:'Roupa nova',val:150,cat:'Vestuário',tipo:'Despesa',mes:6,ano:2025,data:'2025-07-28'},
 ];
 
+// Fontes de renda padrão por mês: {total, fontes:[{nome,val}]}
 let recs={};
-MS.forEach((_,i)=>recs[i]=i===5||i===6?7000:i===4?5800:0);
+MS.forEach((_,i)=>recs[i]={total:0,fontes:[]});
+
+const FONTES_PADRAO = [
+  {ic:'💼', nome:'Salário'},
+  {ic:'👫', nome:'Salário cônjuge'},
+  {ic:'💻', nome:'Freelance / Extra'},
+  {ic:'🏖️', nome:'Férias / 13º'},
+  {ic:'🏠', nome:'Aluguel recebido'},
+  {ic:'📈', nome:'Investimentos'},
+  {ic:'🎁', nome:'Outros'},
+];
 let lims={'Alimentação':1200,'Moradia':1800,'Transporte':500,'Saúde':550,'Lazer':400,'Educação':300,'Vestuário':400,'Outros':300};
 let metas=[
   {n:'Reserva de emergência',atual:4800,meta:18000,cl:'#6c4fd6'},
@@ -677,7 +691,7 @@ function setM(m){cM=m;renderMes();const a=document.querySelector('.sec.on');if(a
 function renderDash(){
   const ls=getLancs(cM,cA);
   const desp=ls.filter(l=>l.tipo==='Despesa').reduce((a,l)=>a+l.val,0);
-  const rec=recs[cM]||0; const sal=rec-desp;
+  const rec=getRecTotal(cM); const sal=rec-desp;
   document.getElementById('krow').innerHTML=`
     <div class="kc"><div class="klbl">Receita</div><div class="kval pos">${fmt(rec)}</div><div class="ksub">${MS[cM]} ${cA}</div></div>
     <div class="kc"><div class="klbl">Despesas</div><div class="kval neg">${fmt(desp)}</div><div class="ksub">${ls.filter(l=>l.tipo==='Despesa').length} lançamentos</div></div>
@@ -729,7 +743,7 @@ function addLanc(){
   const ds=document.getElementById('fData').value;
   if(!desc||!val||val<=0||!ds){toast('tL','Preencha todos os campos.',true);return;}
   const [a,m]=ds.split('-').map(Number);
-  if(tipo==='Receita')recs[m-1]=(recs[m-1]||0)+val;
+  if(tipo==='Receita'){ const cur=recs[m-1]; const curTotal=typeof cur==='object'?cur.total||0:cur||0; if(typeof cur==='object'){recs[m-1]={...cur,total:curTotal+val};}else{recs[m-1]={total:curTotal+val,fontes:[{ic:'🎁',nome:'Outros',val:curTotal+val}]};} }
   lancs.push({id:nid++,desc,val,cat:tipo==='Receita'?'Outros':selC,tipo,mes:m-1,ano:a,data:ds});
   clearF();
   toast('tL','Salvando...');
@@ -763,7 +777,7 @@ function renderCat(){
 function renderEvolucao(){
   const ct=catTotals(cM,cA);
   mkC('groupC',{type:'bar',data:{labels:CK,datasets:[{label:'2 meses atrás',data:CK.map(c=>Math.round((ct[c]||0)*0.72)),backgroundColor:'rgba(108,79,214,0.28)',borderRadius:3},{label:'Mês anterior',data:CK.map(c=>Math.round((ct[c]||0)*0.9)),backgroundColor:'rgba(108,79,214,0.58)',borderRadius:3},{label:'Atual',data:CK.map(c=>ct[c]||0),backgroundColor:PURPLE,borderRadius:3}]},options:{...gOpts,scales:{x:{...xAx,ticks:{color:tc,font:{size:9},maxRotation:30}},y:yAx(v=>fmt(v))}}});
-  const rec=recs[cM]||0;
+  const rec=getRecTotal(cM);
   const dd=getDailyTotals(cM,cA);
   // Mostra gráfico apenas se houver receita
   const areaMsgEl = document.getElementById('areaMsg');
@@ -794,22 +808,54 @@ function renderEvolucao(){
   mkC('saldoC',{type:'bar',data:{labels:sm,datasets:[{data:saldos,backgroundColor:saldos.map(v=>v>=0?PURPLE:RED),borderRadius:4}]},options:{...gOpts,scales:{x:xAx,y:yAx(v=>fmt(v))}}});
 }
 
+function getRecTotal(m){ const r=recs[m]; if(r===undefined||r===null) return 0; if(typeof r==='number') return r; return r.total||0; }
+function getRecFontes(m){ const r=recs[m]; if(!r||typeof r==='number') return []; return r.fontes||[]; }
+
 function renderRec(){
-  document.getElementById('rcgrid').innerHTML=MS.map((m,i)=>{
-    const d=getLancs(i,cA).filter(l=>l.tipo==='Despesa').reduce((a,l)=>a+l.val,0);
-    const s=(recs[i]||0)-d;
-    return`<div class="rcc"><div class="rcm">${m} ${cA}</div><input class="rci" id="ri${i}" type="number" value="${recs[i]||0}" min="0" step="100" placeholder="0,00"><div class="rcs">Despesas: ${fmt(d)}</div><div class="rcs" style="color:${s>=0?'var(--green)':'var(--red)'}">Saldo: ${fmt(s)}</div></div>`;
-  }).join('');
-  document.getElementById('recTbl').innerHTML=`<tr><th>Mês</th><th style="text-align:right;width:110px">Receita</th><th style="text-align:right;width:110px">Despesas</th><th style="text-align:right;width:110px">Saldo</th></tr>`+
-    MS.map((m,i)=>{const r=recs[i]||0;const d=getLancs(i,cA).filter(l=>l.tipo==='Despesa').reduce((a,l)=>a+l.val,0);const s=r-d;return`<tr><td>${m}</td><td style="text-align:right;color:var(--green)">${fmt(r)}</td><td style="text-align:right;color:var(--red)">${fmt(d)}</td><td style="text-align:right;font-weight:500;color:${s>=0?'var(--green)':'var(--red)'}">${fmt(s)}</td></tr>`;}).join('');
+  const mesLabel = document.getElementById('recMesLabel');
+  if(mesLabel) mesLabel.textContent = MS[cM]+' '+cA;
+  const fontes = getRecFontes(cM).length > 0 ? getRecFontes(cM) : FONTES_PADRAO.map(f=>({...f, val:0}));
+  const el = document.getElementById('fontesList');
+  if(el){
+    el.innerHTML = fontes.map((f,i)=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:0.5px solid var(--border)">
+        <div style="font-size:20px;width:28px;text-align:center;flex-shrink:0">${f.ic||'💰'}</div>
+        <div style="flex:1;font-size:13px;color:var(--text-primary)">${f.nome}</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:12px;color:var(--text-muted)">R$</span>
+          <input class="fi" id="fonte${i}" type="number" value="${f.val||0}" min="0" step="100"
+            style="width:130px;text-align:right" onchange="atualizarTotalRec()">
+        </div>
+      </div>`).join('')+`
+      <div style="padding:14px 0 4px;display:flex;justify-content:flex-end;align-items:center;gap:10px">
+        <span style="font-size:12px;color:var(--text-muted)">Total do mês:</span>
+        <span id="recTotalInner" style="font-size:18px;font-weight:500;color:var(--green)">${fmt(getRecTotal(cM))}</span>
+      </div>`;
+  }
+  const tbl = document.getElementById('recTbl');
+  if(tbl) tbl.innerHTML=`<tr><th>Mês</th><th style="text-align:right;width:110px">Receita</th><th style="text-align:right;width:110px">Despesas</th><th style="text-align:right;width:110px">Saldo</th></tr>`+
+    MS.map((m,i)=>{const r=getRecTotal(i);const d=getLancs(i,cA).filter(l=>l.tipo==='Despesa').reduce((a,l)=>a+l.val,0);const s=r-d;return`<tr><td>${m}</td><td style="text-align:right;color:var(--green)">${fmt(r)}</td><td style="text-align:right;color:var(--red)">${fmt(d)}</td><td style="text-align:right;font-weight:500;color:${s>=0?'var(--green)':'var(--red)'}">${fmt(s)}</td></tr>`;}).join('');
 }
+
+function atualizarTotalRec(){
+  const fontes = getRecFontes(cM).length > 0 ? getRecFontes(cM) : FONTES_PADRAO.map(f=>({...f, val:0}));
+  let total = 0;
+  fontes.forEach((_,i)=>{ total += parseFloat(document.getElementById('fonte'+i)?.value)||0; });
+  const el = document.getElementById('recTotalInner');
+  if(el) el.textContent = fmt(total);
+}
+
 function saveRec(){
-  MS.forEach((_,i)=>{const v=parseFloat(document.getElementById('ri'+i)?.value)||0;recs[i]=v;});
+  const fontes = getRecFontes(cM).length > 0 ? getRecFontes(cM) : FONTES_PADRAO.map(f=>({...f, val:0}));
+  const novasFontes = fontes.map((f,i)=>({...f, val: parseFloat(document.getElementById('fonte'+i)?.value)||0}));
+  const total = novasFontes.reduce((a,f)=>a+f.val, 0);
+  getRecTotal(cM) = { total, fontes: novasFontes };
   salvarNoSupabase();
   salvar();
   toast('tR','Receitas salvas!');
   renderRec();
 }
+
 
 function renderLim(){
   const ct=catTotals(cM,cA);
@@ -830,7 +876,7 @@ function saveLim(){
 function renderRel(){
   const ls=getLancs(cM,cA);
   const desp=ls.filter(l=>l.tipo==='Despesa').reduce((a,l)=>a+l.val,0);
-  const rec=recs[cM]||0; const sal=rec-desp; const ct=catTotals(cM,cA);
+  const rec=getRecTotal(cM); const sal=rec-desp; const ct=catTotals(cM,cA);
   const over=CK.filter(c=>(ct[c]||0)>lims[c]);
   const near=CK.filter(c=>!over.includes(c)&&pct(ct[c]||0,lims[c])>=85);
   const nDesp=ls.filter(l=>l.tipo==='Despesa').length;
@@ -953,14 +999,14 @@ function exportarExcel(){
   // ── ABA 3: Resumo anual ──
   const headerAnual = ['Mês','Receita (R$)','Despesas (R$)','Saldo (R$)','Taxa de Poupança'];
   const rowsAnual = MS.map((m,i)=>{
-    const r = recs[i]||0;
+    const r = getRecTotal(i);
     const d = lancs.filter(l=>l.mes===i&&l.ano===cA&&l.tipo==='Despesa').reduce((a,l)=>a+l.val,0);
     const s = r-d;
     const tx = r>0 ? Math.round(s/r*100)+'%' : '—';
     return [m+' '+cA, moeda(r), moeda(d), moeda(s), tx];
   });
   // Totais
-  const totR = MS.reduce((_,__,i)=>_+(recs[i]||0),0);
+  const totR = MS.reduce((_,__,i)=>_+(getRecTotal(i)),0);
   const totD = lancs.filter(l=>l.ano===cA&&l.tipo==='Despesa').reduce((a,l)=>a+l.val,0);
   rowsAnual.push(['TOTAL', moeda(totR), moeda(totD), moeda(totR-totD), totR>0?Math.round((totR-totD)/totR*100)+'%':'—']);
   const wsAnual = XLSX.utils.aoa_to_sheet([headerAnual, ...rowsAnual]);
