@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+a<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -74,6 +74,7 @@
   .ni[data-sec="evolucao"]:hover, .ni[data-sec="evolucao"].on { color: #fbbf24; background: rgba(251,191,36,0.12); border-left-color: #fbbf24; }
   .ni[data-sec="rec"]:hover, .ni[data-sec="rec"].on { color: #34d399; background: rgba(52,211,153,0.12); border-left-color: #34d399; }
   .ni[data-sec="lim"]:hover, .ni[data-sec="lim"].on { color: #f87171; background: rgba(248,113,113,0.12); border-left-color: #f87171; }
+  .ni[data-sec="fixos"]:hover, .ni[data-sec="fixos"].on { color: #34d399; background: rgba(52,211,153,0.12); border-left-color: #34d399; }
   .ni[data-sec="metas"]:hover, .ni[data-sec="metas"].on { color: #fcd34d; background: rgba(252,211,77,0.12); border-left-color: #fcd34d; }
   .ni[data-sec="rel"]:hover, .ni[data-sec="rel"].on { color: #c084fc; background: rgba(192,132,252,0.12); border-left-color: #c084fc; }
   .ni[data-sec="hist"]:hover, .ni[data-sec="hist"].on { color: #94a3b8; background: rgba(148,163,184,0.12); border-left-color: #94a3b8; }
@@ -300,6 +301,7 @@
   <div class="ni" data-sec="evolucao" onclick="nav('evolucao',this)"><i class="ti ti-chart-line"></i> Evolução</div>
   <div class="ni" data-sec="rec" onclick="nav('rec',this)"><i class="ti ti-coin"></i> Receitas</div>
   <div class="ni" data-sec="lim" onclick="nav('lim',this)"><i class="ti ti-target"></i> Limites</div>
+  <div class="ni" data-sec="fixos" onclick="nav('fixos',this)"><i class="ti ti-repeat"></i> Gastos Fixos</div>
   <div class="ni" data-sec="metas" onclick="nav('metas',this)"><i class="ti ti-trophy"></i> Metas</div>
   <div class="ni" data-sec="rel" onclick="nav('rel',this)"><i class="ti ti-report"></i> Relatório</div>
   <div class="ni" data-sec="hist" onclick="nav('hist',this)"><i class="ti ti-list"></i> Histórico</div>
@@ -437,6 +439,40 @@
         <button class="bgr" onclick="saveLim()"><i class="ti ti-check"></i> Salvar limites</button>
         <span class="tst" id="tLim"></span>
       </div>
+    </div>
+  </div>
+
+  <!-- GASTOS FIXOS -->
+  <div class="sec" id="s-fixos">
+    <div class="fcard">
+      <div class="ftitle"><i class="ti ti-repeat" style="color:#34d399"></i>Gastos Fixos Mensais</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Cadastre uma vez e eles aparecem todo mês automaticamente. Marque como pago quando quitar.</p>
+
+      <!-- Formulário novo gasto fixo -->
+      <div style="background:var(--surface-2);border-radius:8px;padding:14px;margin-bottom:16px;border:0.5px solid var(--border)">
+        <div style="font-size:12px;font-weight:500;color:var(--text-primary);margin-bottom:10px"><i class="ti ti-plus" style="margin-right:6px;color:#34d399"></i>Novo gasto fixo</div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:9px;margin-bottom:9px">
+          <div class="fgrp"><label class="flbl">Descrição</label><input class="fi" id="fixoDesc" placeholder="Ex: Conta de Luz"></div>
+          <div class="fgrp"><label class="flbl">Valor (R$)</label><input class="fi" id="fixoValor" type="number" min="0" step="0.01" placeholder="0,00"></div>
+          <div class="fgrp"><label class="flbl">Vencimento (dia)</label><input class="fi" id="fixoDia" type="number" min="1" max="31" placeholder="Ex: 10"></div>
+          <div class="fgrp"><label class="flbl">Categoria</label>
+            <select class="fi" id="fixoCat">
+              <option>Moradia</option><option>Saúde</option><option>Educação</option>
+              <option>Transporte</option><option>Lazer</option><option>Alimentação</option><option>Outros</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="bgr" onclick="addFixo()" style="background:#34d399;color:#0f0a2e"><i class="ti ti-check"></i> Adicionar</button>
+          <span class="tst" id="tFixo"></span>
+        </div>
+      </div>
+
+      <!-- Resumo -->
+      <div id="fixoResumo" style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap"></div>
+
+      <!-- Lista de gastos fixos -->
+      <div id="fixoLista"></div>
     </div>
   </div>
 
@@ -662,7 +698,7 @@ function nav(id,el){
   render(id);
 }
 function render(id){
-  ({dash:renderDash,lancar:renderLancar,cat:renderCat,evolucao:renderEvolucao,rec:renderRec,lim:renderLim,rel:renderRel,hist:renderHist,metas:renderMetasEditor})[id]?.();
+  ({dash:renderDash,lancar:renderLancar,cat:renderCat,evolucao:renderEvolucao,rec:renderRec,lim:renderLim,rel:renderRel,hist:renderHist,metas:renderMetasEditor,fixos:renderFixos})[id]?.();
 }
 
 function renderMes(){
@@ -691,11 +727,24 @@ function renderDash(){
   const ls=getLancs(cM,cA);
   const desp=ls.filter(l=>l.tipo==='Despesa').reduce((a,l)=>a+l.val,0);
   const rec=getRecTotal(cM); const sal=rec-desp;
+  const key = fixoKey(cM, cA);
+  const fixosAtivos = fixos.filter(f=>f.ativo);
+  const fixosAPagar = fixosAtivos.filter(f=>!f.pagos[key]);
+  const totalFixosAPagar = fixosAPagar.reduce((a,f)=>a+f.val, 0);
+  const fixosAtrasados = fixosAPagar.filter(f=>{
+    const hoje = new Date();
+    return cM===hoje.getMonth() && cA===hoje.getFullYear() && hoje.getDate() > f.dia;
+  });
+
   document.getElementById('krow').innerHTML=`
     <div class="kc"><div class="klbl">Receita</div><div class="kval pos">${fmt(rec)}</div><div class="ksub">${MS[cM]} ${cA}</div></div>
     <div class="kc"><div class="klbl">Despesas</div><div class="kval neg">${fmt(desp)}</div><div class="ksub">${ls.filter(l=>l.tipo==='Despesa').length} lançamentos</div></div>
     <div class="kc"><div class="klbl">Saldo</div><div class="kval" style="color:${sal>=0?'var(--green)':'var(--red)'}">${fmt(sal)}</div><div class="ksub">${sal>=0?'Positivo':'Negativo'}</div></div>
-    <div class="kc"><div class="klbl">Economia</div><div class="kval">${rec>0?Math.round(sal/rec*100)+'%':'—'}</div><div class="ksub">da receita</div></div>`;
+    <div class="kc" style="${fixosAtrasados.length>0?'border-color:#f87171':''}" onclick="nav('fixos',document.querySelector('[data-sec=fixos]'))" title="Ver gastos fixos" style="cursor:pointer">
+      <div class="klbl">Fixos a pagar</div>
+      <div class="kval" style="color:${fixosAtrasados.length>0?'#f87171':fixosAPagar.length>0?'var(--amber)':'#34d399'}">${fmt(totalFixosAPagar)}</div>
+      <div class="ksub">${fixosAtrasados.length>0?'⚠ '+fixosAtrasados.length+' atrasado(s)':fixosAPagar.length+' a pagar'}</div>
+    </div>`;
   const ct=catTotals(cM,cA); const tot=Object.values(ct).reduce((a,b)=>a+b,0)||1;
   const cats=Object.keys(ct).sort((a,b)=>ct[b]-ct[a]);
   document.getElementById('legDonut').innerHTML=cats.map(c=>`<span class="li"><span class="ld" style="background:${CATS[c]?.cl||'#888'}"></span>${c} ${Math.round(ct[c]/tot*100)}%</span>`).join('');
@@ -1051,6 +1100,7 @@ function salvar(){
     localStorage.setItem('soldy_lims',  JSON.stringify(lims));
     localStorage.setItem('soldy_nid',   nid);
     localStorage.setItem('soldy_metas', JSON.stringify(metas));
+    localStorage.setItem('soldy_fixos', JSON.stringify(fixos));
   } catch(e){ console.warn('Erro ao salvar:', e); }
 }
 
@@ -1061,11 +1111,13 @@ function carregar(){
     const li=localStorage.getItem('soldy_lims');
     const n=localStorage.getItem('soldy_nid');
     const m=localStorage.getItem('soldy_metas');
+    const fx=localStorage.getItem('soldy_fixos');
     if(l)  lancs  = JSON.parse(l);
     if(r)  recs   = JSON.parse(r);
     if(li) lims   = JSON.parse(li);
     if(n)  nid    = parseInt(n);
     if(m)  metas  = JSON.parse(m);
+    if(fx) fixos  = JSON.parse(fx);
     return !!(l||r||li);
   } catch(e){ console.warn('Erro ao carregar:', e); return false; }
 }
@@ -1106,6 +1158,120 @@ async function sair(){
   localStorage.removeItem('soldy_session');
   location.reload();
 }
+
+// ── GASTOS FIXOS ─────────────────────────────────────────────
+let fixos = [
+  {id:1, desc:'Aluguel',        val:1500, dia:5,  cat:'Moradia',    ativo:true, pagos:{}},
+  {id:2, desc:'Conta de Luz',   val:180,  dia:15, cat:'Moradia',    ativo:true, pagos:{}},
+  {id:3, desc:'Água e Gás',     val:90,   dia:10, cat:'Moradia',    ativo:true, pagos:{}},
+  {id:4, desc:'Internet',       val:120,  dia:8,  cat:'Moradia',    ativo:true, pagos:{}},
+  {id:5, desc:'Plano de Saúde', val:280,  dia:5,  cat:'Saúde',      ativo:true, pagos:{}},
+  {id:6, desc:'Academia',       val:90,   dia:1,  cat:'Saúde',      ativo:true, pagos:{}},
+  {id:7, desc:'Condomínio',     val:350,  dia:10, cat:'Moradia',    ativo:true, pagos:{}},
+];
+let fixoNextId = 10;
+
+function fixoKey(m, a){ return `${a}-${m}`; }
+
+function renderFixos(){
+  const key = fixoKey(cM, cA);
+  const ativos = fixos.filter(f=>f.ativo);
+  const total = ativos.reduce((a,f)=>a+f.val, 0);
+  const pagos = ativos.filter(f=>f.pagos[key]);
+  const totalPago = pagos.reduce((a,f)=>a+f.val, 0);
+  const aPagar = total - totalPago;
+
+  // Resumo
+  document.getElementById('fixoResumo').innerHTML = `
+    <div style="flex:1;min-width:120px;background:var(--surface-2);border-radius:8px;padding:10px 12px;border:0.5px solid var(--border)">
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">Total fixos/mês</div>
+      <div style="font-size:18px;font-weight:500;color:var(--red)">${fmt(total)}</div>
+    </div>
+    <div style="flex:1;min-width:120px;background:var(--surface-2);border-radius:8px;padding:10px 12px;border:0.5px solid var(--border)">
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">Já pago</div>
+      <div style="font-size:18px;font-weight:500;color:#34d399">${fmt(totalPago)}</div>
+    </div>
+    <div style="flex:1;min-width:120px;background:var(--surface-2);border-radius:8px;padding:10px 12px;border:0.5px solid var(--border)">
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">A pagar</div>
+      <div style="font-size:18px;font-weight:500;color:${aPagar>0?'var(--amber)':'#34d399'}">${fmt(aPagar)}</div>
+    </div>
+    <div style="flex:1;min-width:120px;background:var(--surface-2);border-radius:8px;padding:10px 12px;border:0.5px solid var(--border)">
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">Quitados</div>
+      <div style="font-size:18px;font-weight:500">${pagos.length}/${ativos.length}</div>
+    </div>`;
+
+  // Lista
+  const sorted = [...ativos].sort((a,b)=>a.dia-b.dia);
+  document.getElementById('fixoLista').innerHTML = sorted.map(f=>{
+    const pago = !!f.pagos[key];
+    const cl = CATS[f.cat]?.cl || '#888';
+    const hoje = new Date().getDate();
+    const atrasado = !pago && cM===new Date().getMonth() && cA===new Date().getFullYear() && hoje > f.dia;
+    return `
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:0.5px solid var(--border);opacity:${pago?'0.6':'1'}">
+      <div style="width:36px;height:36px;border-radius:50%;background:${pago?'#34d399':'var(--surface-2)'};border:2px solid ${pago?'#34d399':atrasado?'#f87171':'var(--border)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer" onclick="togglePago(${f.id})" title="${pago?'Marcar como não pago':'Marcar como pago'}">
+        ${pago?'<i class="ti ti-check" style="color:#fff;font-size:16px"></i>':''}
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500;color:var(--text-primary);${pago?'text-decoration:line-through':''}">${f.desc}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">
+          <span class="bdg" style="background:${cl}22;color:${cl};margin-right:6px">${f.cat}</span>
+          Vence dia <strong>${f.dia}</strong>
+          ${atrasado?'<span style="color:#f87171;margin-left:6px"><i class="ti ti-alert-circle"></i> Atrasado</span>':''}
+        </div>
+      </div>
+      <div style="font-size:15px;font-weight:500;color:${pago?'#34d399':'var(--red)'};min-width:80px;text-align:right">${fmt(f.val)}</div>
+      <button onclick="removeFixo(${f.id})" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:4px" title="Remover"><i class="ti ti-trash"></i></button>
+    </div>`;
+  }).join('') || '<div style="font-size:13px;color:var(--text-muted);padding:20px 0;text-align:center">Nenhum gasto fixo cadastrado. Adicione acima!</div>';
+}
+
+function togglePago(id){
+  const key = fixoKey(cM, cA);
+  const f = fixos.find(x=>x.id===id);
+  if(!f) return;
+  if(f.pagos[key]){
+    delete f.pagos[key];
+    // Remove do lançamentos se foi adicionado automaticamente
+    lancs = lancs.filter(l=>!(l.fixoId===id && l.mes===cM && l.ano===cA));
+  } else {
+    f.pagos[key] = true;
+    // Adiciona como lançamento automaticamente
+    const hoje = new Date();
+    const dataStr = `${cA}-${String(cM+1).padStart(2,'0')}-${String(f.dia).padStart(2,'0')}`;
+    lancs.push({id:fixoNextId++, desc:f.desc, val:f.val, cat:f.cat, tipo:'Despesa', mes:cM, ano:cA, data:dataStr, fixoId:id});
+  }
+  salvarNoSupabase();
+  salvar();
+  renderFixos();
+  renderDash();
+  toast('tFixo', f.pagos[key] ? '✅ Marcado como pago!' : 'Desmarcado.');
+}
+
+function addFixo(){
+  const desc  = document.getElementById('fixoDesc').value.trim();
+  const val   = parseFloat(document.getElementById('fixoValor').value);
+  const dia   = parseInt(document.getElementById('fixoDia').value)||1;
+  const cat   = document.getElementById('fixoCat').value;
+  if(!desc||!val||val<=0){ toast('tFixo','Preencha descrição e valor.',true); return; }
+  fixos.push({id:fixoNextId++, desc, val, dia, cat, ativo:true, pagos:{}});
+  document.getElementById('fixoDesc').value='';
+  document.getElementById('fixoValor').value='';
+  document.getElementById('fixoDia').value='';
+  salvarNoSupabase();
+  salvar();
+  toast('tFixo','Gasto fixo adicionado!');
+  renderFixos();
+}
+
+function removeFixo(id){
+  if(!confirm('Remover este gasto fixo?')) return;
+  fixos = fixos.filter(f=>f.id!==id);
+  salvarNoSupabase();
+  salvar();
+  renderFixos();
+}
+// ─────────────────────────────────────────────────────────────
 
 function renderMetasEditor(){
   const el = document.getElementById('metasList');
@@ -1216,6 +1382,7 @@ async function carregarDoSupabase(){
       if(cfg.receitas) recs  = cfg.receitas;
       if(cfg.limites)  lims  = cfg.limites;
       if(cfg.metas)    metas = cfg.metas;
+      if(cfg.fixos)    fixos = cfg.fixos;
     }
     return true;
   } catch(e){ console.warn('Erro ao carregar do Supabase:', e); return false; }
@@ -1243,7 +1410,7 @@ async function salvarNoSupabase(){
     // Salvar configurações
     await supa.from('configuracoes').delete().eq('user_id', uid);
     const {error: errCfg} = await supa.from('configuracoes').insert({
-      user_id: uid, receitas: recs, limites: lims, metas: metas
+      user_id: uid, receitas: recs, limites: lims, metas: metas, fixos: fixos
     });
     if(errCfg){ console.error('Erro ao salvar configs:', errCfg); throw errCfg; }
     atualizarStatus('Sincronizado ✓', '#6c4fd6');
